@@ -874,9 +874,13 @@ function getTotalExercisesDone(){
   return done;
 }
 function getStreak(){
+  // Find the highest completed week, then count consecutive completed weeks backwards from there
+  let lastComplete=0;
+  for(let w=1;w<=12;w++) if(getWeekProgress(w).complete) lastComplete=w;
+  if(lastComplete===0) return 0;
   let streak=0;
-  for(let w=12;w>=1;w--){
-    if(getWeekProgress(w).complete)streak++;
+  for(let w=lastComplete;w>=1;w--){
+    if(getWeekProgress(w).complete) streak++;
     else break;
   }
   return streak;
