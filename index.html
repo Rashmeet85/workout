@@ -931,9 +931,11 @@ function switchGoalTab(tab){
 }
 
 // ══════════════════════════════════════════════
-// PAGE ROUTING
+// PAGE ROUTING + BACK GESTURE SUPPORT
 // ══════════════════════════════════════════════
-function showPage(page){
+let _activePage = 'home';
+
+function showPage(page, pushState=true){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   if(page==='home'){
@@ -953,7 +955,33 @@ function showPage(page){
     renderWeekPage(currentWeekPage);
   }
   window.scrollTo({top:0,behavior:'smooth'});
+
+  // Push a history entry so the phone's back gesture has something to pop
+  if(pushState){
+    if(page==='home'){
+      // Replace state for home so there's always a home entry at the bottom
+      history.replaceState({page:'home'}, '', '');
+    } else {
+      // Push a new entry for any non-home page
+      const stateData = page==='week' ? {page:'week', week:currentWeekPage} : {page};
+      history.pushState(stateData, '', '');
+    }
+  }
+  _activePage = page;
 }
+
+// When the user swipes back / presses the hardware back button,
+// popstate fires. If we're not already on home, go home instead of
+// letting the browser navigate away from the app.
+window.addEventListener('popstate', function(e){
+  if(_activePage !== 'home'){
+    // Navigate to home without pushing a new state (we're handling the pop ourselves)
+    showPage('home', false);
+    // Re-push a state so there's still a forward entry to pop next time
+    history.pushState({page:'home'}, '', '');
+  }
+  // If already on home, let the browser do its default thing (minimise / close tab)
+});
 
 // ══════════════════════════════════════════════
 // STATS UPDATE
@@ -1349,6 +1377,8 @@ function showToast(icon,msg){
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+// Seed a home history entry so the very first back gesture is interceptable
+history.replaceState({page:'home'}, '', '');
 renderHome();
 </script>
 </body>
